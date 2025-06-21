@@ -13,7 +13,7 @@ def request_api(url, json = None, allow_errors = False):
         url=api_endpoint + url,
         headers={"Content-Type": "application/json"},
         json=json or {},
-        verify=False
+        verify=api_endpoint.startswith("https://")
     )
     if not res.ok:
         if allow_errors:
