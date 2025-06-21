@@ -1,0 +1,7 @@
+*.mp3
+.idea
+venv
+*.iml
+.editor
+.refresh_token
+*.local
