@@ -108,10 +108,12 @@ class Agent:
                                 print(Style.GRAY + "Waiting for wake word")
 
                 except websockets.exceptions.ConnectionClosed:
-                    break
+                    print(Style.RED + "Websocket connection closed")
+                    print(self.socket.close_code, self.socket.close_reason)
+                    os._exit(1)
                 except Exception as e:
                     print(Style.RED + "Error in event loop:", e)
-                    break
+                    os._exit(1)
         except Exception as e:
             print(Style.RED + "Failed to connect to WebSocket:", e)
             os._exit(1)
