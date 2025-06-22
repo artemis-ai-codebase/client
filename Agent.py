@@ -83,7 +83,8 @@ class Agent:
                         print(Style.GREEN + "Received voice response")
 
                         self.messages = data["messages"]
-                        print(Style.RESET + ">>> " + self.messages[-1]["content"])
+                        message = self.messages[-1]
+                        print(Style.RESET + ">>> " + message["content"])
 
                         audio_bytes = base64.b64decode(str(data["audio"]).split(',')[1])
                         with open("temp.mp3", "wb") as f:
@@ -93,14 +94,14 @@ class Agent:
                         speaker.play("temp.mp3")
 
                         print(Style.GRAY + "Speaking")
-                        while speaker.is_playing:
-                            if get_recorder().is_voice_active:
+                        while speaker.is_playing and self.messages[-1] == message and self.state == AgentState.SPEAKING:
+                            if len(message["content"]) > 50 and get_recorder().is_voice_active:
                                 print(Style.YELLOW + "Cut off")
                                 speaker.stop()
                                 self.isTargetDevice = True
                                 self.listen()
                         if self.state == AgentState.SPEAKING:
-                            if "?" in self.messages[-1]["content"]:
+                            if "?" in message["content"]:
                                 self.isTargetDevice = True
                                 self.listen()
                             else:
