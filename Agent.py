@@ -8,7 +8,7 @@ from threading import Thread
 
 import websockets
 
-from Recorder import recorder
+from Recorder import get_recorder
 from Speaker import speaker
 from Style import Style
 from config import websocket_endpoint, device_name
@@ -94,7 +94,7 @@ class Agent:
 
                         print(Style.GRAY + "Speaking")
                         while speaker.is_playing:
-                            if recorder.is_voice_active:
+                            if get_recorder().is_voice_active:
                                 print(Style.YELLOW + "Cut off")
                                 speaker.stop()
                                 self.isTargetDevice = True
@@ -130,7 +130,7 @@ class Agent:
 
     def listen(self):
         self.state = AgentState.LISTENING
-        recorder.record_while_speaking("input.mp3", record_before_speaking=True)
+        get_recorder().record_while_speaking("input.mp3", record_before_speaking=True)
         if self.isTargetDevice:
             self._schedule_async(self.send_voice_request("input.mp3"))
         else:

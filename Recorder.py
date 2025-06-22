@@ -82,5 +82,12 @@ class Recorder:
         self.running = False
 
 
-recorder = Recorder()
-recorder.start()
+recorder: Recorder | None = None
+
+
+def get_recorder() -> Recorder:
+    global recorder
+    if not recorder:
+        recorder = Recorder()
+        recorder.start()
+    return recorder
