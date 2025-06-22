@@ -3,26 +3,20 @@ import time
 
 import pvporcupine
 
-import config
 from Recorder import get_recorder
+from config import get_platform
 
+porcupine: pvporcupine.Porcupine | None = None
 
-porcupine: pvporcupine.Porcupine|None = None
 
 def get_porcupine() -> pvporcupine.Porcupine:
     global porcupine
     if not porcupine:
-        if config.lang == "fr":
-            porcupine = pvporcupine.create(
-                access_key=os.environ.get("PICOVOICE_ACCESS_KEY"),
-                keyword_paths=["./models/Artemis_fr_linux_v3_0_0.ppn"],
-                model_path="./models/porcupine_params_fr.pv"
-            )
-        else:
-            porcupine = pvporcupine.create(
-                access_key=os.environ.get("PICOVOICE_ACCESS_KEY"),
-                keyword_paths=["./models/Artemis_en_linux_v3_0_0.ppn"]
-            )
+        porcupine = pvporcupine.create(
+            access_key=os.environ.get("PICOVOICE_ACCESS_KEY"),
+            keyword_paths=[f"./models/Artemis_fr_{get_platform()}_v3_0_0.ppn"],
+            model_path="./models/porcupine_params_fr.pv"
+        )
     return porcupine
 
 

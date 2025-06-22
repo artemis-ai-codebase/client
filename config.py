@@ -11,4 +11,13 @@ api_endpoint = os.getenv("API_ENDPOINT")
 websocket_endpoint = os.getenv("WEBSOCKET_ENDPOINT")
 device_name = os.getenv("DEVICE_NAME")
 have_gui = int(os.getenv("HAVE_GUI"))
-lang = os.getenv("LANG")
+
+
+def get_platform():
+    try:
+        with open('/proc/device-tree/model') as f:
+            if 'Raspberry Pi' in f.read():
+                return 'raspberry-pi'
+    except FileNotFoundError:
+        pass
+    return 'linux'
