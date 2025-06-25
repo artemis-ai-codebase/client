@@ -1,4 +1,3 @@
-import os
 import threading
 import time
 
@@ -6,9 +5,11 @@ from pydub import AudioSegment
 
 from Speaker import speaker
 
-if not os.path.exists("silence.mp3"):
-    silence = AudioSegment.silent(duration=100)
-    silence.export("silence.mp3", format="mp3")
+MS = 100
+
+num_samples = 44100 * MS // 1000
+beep = AudioSegment(bytes([8, 0] * num_samples), frame_rate=44100, sample_width=2, channels=1)
+beep.export("noise.mp3", format="mp3")
 
 
 def start():
@@ -19,5 +20,5 @@ def start():
 def loop():
     while True:
         if not speaker.is_playing:
-            speaker.play("silence.mp3")
+            speaker.play("noise.mp3")
         time.sleep(60)
