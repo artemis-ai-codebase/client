@@ -70,6 +70,10 @@ class Agent:
                         if data["status"] == "accepted":
                             print(Style.GREEN + "Negotiation accepted")
                             self.isTargetDevice = True
+                        elif data["status"] == "rejected":
+                            print(Style.YELLOW + "Negotiation rejected")
+                            self.isTargetDevice = False
+                            self.state = AgentState.IDLE
                     elif data["type"] == "toolCallRequest":
                         tool_name = data["tool_call"]["function"]["name"]
                         tool_args = json.loads(data["tool_call"]["function"]["arguments"])
