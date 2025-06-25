@@ -139,9 +139,10 @@ class Agent:
 
     def listen(self):
         self.state = AgentState.LISTENING
-        self._schedule_async(get_recorder().record_while_speaking("input.mp3", record_before_speaking=True))
+        get_recorder().record_while_speaking("input.mp3", record_before_speaking=True)
         while get_recorder().is_recording and self.state == AgentState.LISTENING:
             time.sleep(0.01)
+        get_recorder().is_recording = False
         if self.state == AgentState.LISTENING:
             while self.negotiationState == NegotiationStatus.PENDING:
                 time.sleep(0.01)

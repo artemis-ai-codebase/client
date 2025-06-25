@@ -34,7 +34,10 @@ class Recorder:
 
         self.recorder.stop()
 
-    async def record_while_speaking(self, output_path: str, record_before_speaking: bool):
+    def record_while_speaking(self, output_path: str, record_before_speaking: bool = False):
+        threading.Thread(target=self._record_while_speaking, args=(output_path, record_before_speaking)).start()
+
+    def _record_while_speaking(self, output_path: str, record_before_speaking: bool):
         if not self.running:
             self.start()
 
@@ -55,7 +58,7 @@ class Recorder:
 
         print(Style.GRAY + "Recording")
 
-        while not start_speaking or frame_not_speak < 30:
+        while self.is_recording and (not start_speaking or frame_not_speak < 30):
             if processed_frame_id == self.last_frame_id:
                 time.sleep(0.01)
                 continue
