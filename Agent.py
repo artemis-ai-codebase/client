@@ -30,13 +30,20 @@ class AgentState:
     LISTENING = 2
 
 
+class NegotiationStatus:
+    IDLE = 0
+    ACCEPTED = 1
+    REJECTED = 2
+    PENDING = 3
+
+
 class Agent:
     def __init__(self, token):
         self.token = token
         self.state = AgentState.IDLE
         self.messages = []
         self.socket = None
-        self.isTargetDevice = False
+        self.negotiationState = NegotiationStatus.IDLE
         self.loop = None
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
@@ -69,10 +76,10 @@ class Agent:
                     if data["type"] == "negotiationResponse":
                         if data["status"] == "accepted":
                             print(Style.GREEN + "Negotiation accepted")
-                            self.isTargetDevice = True
+                            self.negotiationState = NegotiationStatus.ACCEPTED
                         elif data["status"] == "rejected":
                             print(Style.YELLOW + "Negotiation rejected")
-                            self.isTargetDevice = False
+                            self.negotiationState = NegotiationStatus.REJECTED
                             self.state = AgentState.IDLE
                     elif data["type"] == "toolCallRequest":
                         tool_name = data["tool_call"]["function"]["name"]
@@ -103,7 +110,7 @@ class Agent:
                         speaker.stop()
                         if self.state == AgentState.SPEAKING:
                             if "?" in message["content"]:
-                                self.isTargetDevice = True
+                                self.negotiationState = NegotiationStatus.ACCEPTED
                                 self.listen()
                             else:
                                 self.state = AgentState.IDLE
@@ -136,10 +143,13 @@ class Agent:
         while get_recorder().is_recording and self.state == AgentState.LISTENING:
             time.sleep(0.01)
         if self.state == AgentState.LISTENING:
-            if self.isTargetDevice:
+            while self.negotiationState == NegotiationStatus.PENDING:
+                time.sleep(0.01)
+            if self.negotiationState == NegotiationStatus.ACCEPTED:
                 self._schedule_async(self.send_voice_request("input.mp3"))
             else:
                 self.state = AgentState.IDLE
+                self.negotiationState = NegotiationStatus.IDLE
 
     def _schedule_async(self, coro):
         """Schedule an async coroutine to run in the async event loop"""
@@ -149,6 +159,7 @@ class Agent:
     async def perform_negotiation(self):
         if self.socket:
             print(Style.CYAN + "Sending negotiation")
+            self.negotiationState = NegotiationStatus.PENDING
             priority = 0
             if speaker.is_playing:
                 priority += 1
@@ -159,11 +170,11 @@ class Agent:
             }))
 
     async def send_voice_request(self, path: str):
-        if self.isTargetDevice and self.socket:
+        if self.negotiationState == NegotiationStatus.ACCEPTED and self.socket:
             print(Style.CYAN + "Sending speech")
             await self.socket.send(json.dumps({
                 "type": "voiceRequest",
                 "messages": self.messages,
                 "audio": path_to_base64_uri(path)
             }))
-            self.isTargetDevice = False
+            self.negotiationState = NegotiationStatus.IDLE
