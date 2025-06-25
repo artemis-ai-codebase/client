@@ -1,6 +1,7 @@
 def tool(_func=None, enabled=True):
     def decorator(func):
-        setattr(func, '__tool__', enabled)
+        if enabled:
+            setattr(func, '__tool__', True)
         return func
 
     if _func is None:
