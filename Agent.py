@@ -85,10 +85,14 @@ class Agent:
                         tool_name = data["tool_call"]["function"]["name"]
                         tool_args = json.loads(data["tool_call"]["function"]["arguments"])
                         print(Style.GREEN + "Received tool call request:", tool_name)
+                        try:
+                            output = execute_tool_call(tool_name, tool_args)
+                        except Exception as e:
+                            output = str(e)
                         await self.socket.send(json.dumps({
                             "type": "toolCallResponse",
                             "tool_call_id": data["tool_call"]["id"],
-                            "content": execute_tool_call(tool_name, tool_args)
+                            "content": output
                         }))
                     elif data["type"] == "voiceResponse":
                         print(Style.GREEN + "Received voice response")
