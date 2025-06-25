@@ -16,6 +16,7 @@ class Recorder:
         self.last_frame_id = 0
         self.is_voice_active = False
         self.running = False
+        self.is_recording = False
 
         self.recorder = pvrecorder.PvRecorder(device_index=-1, frame_length=512)
         self.cobra = pvcobra.create(access_key=os.environ.get("PICOVOICE_ACCESS_KEY"))
@@ -33,10 +34,11 @@ class Recorder:
 
         self.recorder.stop()
 
-    def record_while_speaking(self, output_path: str, record_before_speaking: bool):
+    async def record_while_speaking(self, output_path: str, record_before_speaking: bool):
         if not self.running:
             self.start()
 
+        self.is_recording = True
         start_speaking = False
         frame_not_speak = 0
         processed_frame_id = None
@@ -73,6 +75,7 @@ class Recorder:
                 frame_not_speak = 0
             else:
                 frame_not_speak += 1
+        self.is_recording = False
 
     def start(self):
         self.running = True

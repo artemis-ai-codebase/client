@@ -94,12 +94,9 @@ class Agent:
                         speaker.play("temp.mp3")
 
                         print(Style.GRAY + "Speaking")
-                        while speaker.is_playing and self.messages[-1] == message and self.state == AgentState.SPEAKING:
-                            if len(message["content"]) > 50 and get_recorder().is_voice_active:
-                                print(Style.YELLOW + "Cut off")
-                                speaker.stop()
-                                self.isTargetDevice = True
-                                self.listen()
+                        while speaker.is_playing and self.state == AgentState.SPEAKING:
+                            time.sleep(0.01)
+                        speaker.stop()
                         if self.state == AgentState.SPEAKING:
                             if "?" in message["content"]:
                                 self.isTargetDevice = True
@@ -124,18 +121,21 @@ class Agent:
         print(Style.GRAY + "Waiting for wake word")
         while True:
             wait_for_wakeword()
-            if self.state != AgentState.IDLE:
+            if self.state == AgentState.LISTENING:
                 continue
             self._schedule_async(self.perform_negotiation())
             self.listen()
 
     def listen(self):
         self.state = AgentState.LISTENING
-        get_recorder().record_while_speaking("input.mp3", record_before_speaking=True)
-        if self.isTargetDevice:
-            self._schedule_async(self.send_voice_request("input.mp3"))
-        else:
-            self.state = AgentState.IDLE
+        self._schedule_async(get_recorder().record_while_speaking("input.mp3", record_before_speaking=True))
+        while get_recorder().is_recording and self.state == AgentState.LISTENING:
+            time.sleep(0.01)
+        if self.state == AgentState.LISTENING:
+            if self.isTargetDevice:
+                self._schedule_async(self.send_voice_request("input.mp3"))
+            else:
+                self.state = AgentState.IDLE
 
     def _schedule_async(self, coro):
         """Schedule an async coroutine to run in the async event loop"""
@@ -145,10 +145,13 @@ class Agent:
     async def perform_negotiation(self):
         if self.socket:
             print(Style.CYAN + "Sending negotiation")
+            priority = 0
+            if speaker.is_playing:
+                priority += 1
             await self.socket.send(json.dumps({
                 "type": "negotiationRequest",
                 "device_name": device_name,
-                "priority_score": 50
+                "priority_score": priority
             }))
 
     async def send_voice_request(self, path: str):
